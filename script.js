@@ -1,5 +1,5 @@
 // --- CONFIGURAÇÃO DO SUPABASE ---
-const SUPABASE_URL = 'https://keepzepbtsuhaeeospgs.supabase.co/rest/v1/';
+const SUPABASE_URL = 'https://keepzepbtsuhaeeospgs.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlZXB6ZXBidHN1aGFlZW9zcGdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA5NTY1MjgsImV4cCI6MjEwNjUzMjUyOH0.YnyYI46OWXwSKOQ6GZ8xkNM5rQg8WOPc8XgMCgLhiqQ';
 
 // Inicializa o cliente do Supabase
