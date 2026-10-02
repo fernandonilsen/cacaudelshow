@@ -1,17 +1,15 @@
-// Banco de dados simulado no Local Storage
-let usuarios = JSON.parse(localStorage.getItem('cs_usuarios')) || [
-    { nome: 'admin', senha: '123', perfil: 'admin' },
-    { nome: 'vendedor1', senha: '123', perfil: 'vendedor' }
-];
+// --- CONFIGURAÇÃO DO SUPABASE ---
+const SUPABASE_URL = 'https://keepzepbtsuhaeeospgs.supabase.co/rest/v1/';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlZXB6ZXBidHN1aGFlZW9zcGdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA5NTY1MjgsImV4cCI6MjEwNjUzMjUyOH0.YnyYI46OWXwSKOQ6GZ8xkNM5rQg8WOPc8XgMCgLhiqQ';
 
-let produtos = JSON.parse(localStorage.getItem('cs_produtos')) || [
-    { id: 1, nome: 'Trufa Tradicional 30g', custo: 2.50, preco: 5.00, estoque: 20 },
-    { id: 2, nome: 'Panetone Trufado', custo: 35.00, preco: 69.90, estoque: 5 }
-];
+// Inicializa o cliente do Supabase
+const { createClient } = supabase;
+const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-let sacolas = JSON.parse(localStorage.getItem('cs_sacolas')) || [];
-
-// Sessão atual
+// Variáveis de estado globais
+let usuarios = [];
+let produtos = [];
+let sacolas = [];
 let usuarioLogado = null;
 
 // Elementos DOM
@@ -20,12 +18,40 @@ const adminDashboard = document.getElementById('admin-dashboard');
 const sellerDashboard = document.getElementById('seller-dashboard');
 const loginForm = document.getElementById('login-form');
 
+// Carregar dados iniciais do Supabase ao abrir a página
+async function carregarDadosDoBanco() {
+    try {
+        const [resUsuarios, resProdutos, resSacolas] = await Promise.all([
+            _supabase.from('usuarios').select('*'),
+            _supabase.from('produtos').select('*'),
+            _supabase.from('sacolas').select('*')
+        ]);
+
+        if (resUsuarios.error) throw resUsuarios.error;
+        if (resProdutos.error) throw resProdutos.error;
+        if (resSacolas.error) throw resSacolas.error;
+
+        usuarios = resUsuarios.data;
+        produtos = resProdutos.data;
+        sacolas = resSacolas.data;
+    } catch (error) {
+        console.error('Erro ao carregar dados do Supabase:', error.message);
+        alert('Erro ao conectar com o banco de dados. Verifique suas credenciais.');
+    }
+}
+
+// Executa o carregamento inicial
+carregarDadosDoBanco();
+
 // Sistema de Login
-loginForm.addEventListener('submit', (e) => {
+loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const tipo = document.getElementById('login-type').value;
     const nomeInput = document.getElementById('username').value.trim().toLowerCase();
     const senhaInput = document.getElementById('password').value;
+
+    // Atualiza os dados para garantir que temos o cadastro mais recente da nuvem
+    await carregarDadosDoBanco();
 
     const userEncontrado = usuarios.find(u => u.nome.toLowerCase() === nomeInput && u.senha === senhaInput && u.perfil === tipo);
 
@@ -52,7 +78,7 @@ document.getElementById('logout-seller').addEventListener('click', () => locatio
 
 // --- CADASTRO DE NOVOS USUÁRIOS (ADMIN) ---
 const userForm = document.getElementById('user-form');
-userForm.addEventListener('submit', (e) => {
+userForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const nome = document.getElementById('new-user-name').value.trim();
     const senha = document.getElementById('new-user-pass').value;
@@ -63,8 +89,14 @@ userForm.addEventListener('submit', (e) => {
         return;
     }
 
-    usuarios.push({ nome, senha, perfil });
-    salvarDados();
+    const { error } = await _supabase.from('usuarios').insert([{ nome, senha, perfil }]);
+
+    if (error) {
+        alert('Erro ao cadastrar usuário: ' + error.message);
+        return;
+    }
+
+    await carregarDadosDoBanco();
     userForm.reset();
     atualizarAdmin();
     alert(`Usuário ${nome} (${perfil}) cadastrado com sucesso!`);
@@ -76,15 +108,21 @@ const stockTableBody = document.getElementById('stock-table-body');
 const bagProductSelect = document.getElementById('bag-product');
 const bagSellerSelect = document.getElementById('bag-seller');
 
-productForm.addEventListener('submit', (e) => {
+productForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const nome = document.getElementById('prod-name').value;
     const custo = parseFloat(document.getElementById('prod-cost').value);
     const preco = parseFloat(document.getElementById('prod-price').value);
     const estoque = parseInt(document.getElementById('prod-stock').value);
 
-    produtos.push({ id: Date.now(), nome, custo, preco, estoque });
-    salvarDados();
+    const { error } = await _supabase.from('produtos').insert([{ nome, custo, preco, estoque }]);
+
+    if (error) {
+        alert('Erro ao cadastrar produto: ' + error.message);
+        return;
+    }
+
+    await carregarDadosDoBanco();
     productForm.reset();
     atualizarAdmin();
     alert('Produto cadastrado com sucesso!');
@@ -98,7 +136,7 @@ function atualizarAdmin() {
     const userTableBody = document.getElementById('user-table-body');
     if (userTableBody) userTableBody.innerHTML = '';
 
-    // Preencher tabela de estoque e lucro com o botão de excluir
+    // Preencher tabela de estoque e lucro
     produtos.forEach(p => {
         const lucroUnitario = p.preco - p.custo;
         const lucroPotencial = lucroUnitario * p.estoque;
@@ -119,7 +157,7 @@ function atualizarAdmin() {
         bagProductSelect.innerHTML += `<option value="${p.id}">${p.nome} (Estoque: ${p.estoque})</option>`;
     });
 
-    // Preencher select apenas com os vendedores cadastrados
+    // Preencher select com os vendedores cadastrados
     const apenasVendedores = usuarios.filter(u => u.perfil === 'vendedor');
     apenasVendedores.forEach(v => {
         bagSellerSelect.innerHTML += `<option value="${v.nome}">${v.nome}</option>`;
@@ -143,37 +181,48 @@ function atualizarAdmin() {
     }
 }
 
-// Função para remover usuário (FORA de qualquer outra função)
-window.removerUsuario = function(nomeUsuario) {
+// Função para remover usuário
+window.removerUsuario = async function(nomeUsuario) {
     if (nomeUsuario.toLowerCase() === usuarioLogado.nome.toLowerCase()) {
         alert('Você não pode excluir a si mesmo enquanto está logado!');
         return;
     }
 
     if (confirm(`Tem certeza que deseja excluir o usuário ${nomeUsuario}?`)) {
-        usuarios = usuarios.filter(u => u.nome.toLowerCase() !== nomeUsuario.toLowerCase());
-        sacolas = sacolas.filter(s => s.vendedor.toLowerCase() !== nomeUsuario.toLowerCase());
+        const { error } = await _supabase.from('usuarios').delete().eq('nome', nomeUsuario);
+        
+        if (error) {
+            alert('Erro ao excluir usuário: ' + error.message);
+            return;
+        }
 
-        salvarDados();
+        // Remove também as sacolas associadas no banco
+        await _supabase.from('sacolas').delete().eq('vendedor', nomeUsuario);
+
+        await carregarDadosDoBanco();
         atualizarAdmin();
         alert('Usuário excluído com sucesso!');
     }
 };
 
 // Função para remover produto
-window.removerProduto = function(id) {
+window.removerProduto = async function(id) {
     if (confirm('Tem certeza que deseja excluir este produto do estoque?')) {
-        produtos = produtos.filter(p => p.id !== id);
-        sacolas = sacolas.filter(s => s.produtoId !== id);
+        const { error } = await _supabase.from('produtos').delete().eq('id', id);
 
-        salvarDados();
+        if (error) {
+            alert('Erro ao excluir produto: ' + error.message);
+            return;
+        }
+
+        await carregarDadosDoBanco();
         atualizarAdmin();
         alert('Produto excluído com sucesso!');
     }
 };
 
 // Montar Sacola
-document.getElementById('bag-form').addEventListener('submit', (e) => {
+document.getElementById('bag-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const vendedor = document.getElementById('bag-seller').value;
     const produtoId = parseInt(document.getElementById('bag-product').value);
@@ -186,16 +235,21 @@ document.getElementById('bag-form').addEventListener('submit', (e) => {
         return;
     }
 
-    produto.estoque -= qtd;
+    // Atualiza o estoque do produto no banco
+    const novoEstoque = produto.estoque - qtd;
+    await _supabase.from('produtos').update({ estoque: novoEstoque }).eq('id', produtoId);
+
+    // Verifica se já existe sacola para esse vendedor e produto
+    const itemExistente = sacolas.find(s => s.vendedor === vendedor && s.produto_id === produtoId);
     
-    const itemExistente = sacolas.find(s => s.vendedor === vendedor && s.produtoId === produtoId);
     if (itemExistente) {
-        itemExistente.quantidade += qtd;
+        const novaQtd = itemExistente.quantidade + qtd;
+        await _supabase.from('sacolas').update({ quantidade: novaQtd }).eq('id', itemExistente.id);
     } else {
-        sacolas.push({ vendedor, produtoId, quantidade: qtd });
+        await _supabase.from('sacolas').insert([{ vendedor, produto_id: produtoId, quantidade: qtd }]);
     }
 
-    salvarDados();
+    await carregarDadosDoBanco();
     atualizarAdmin();
     alert(`Sacola enviada para o vendedor ${vendedor}!`);
 });
@@ -204,7 +258,8 @@ document.getElementById('bag-form').addEventListener('submit', (e) => {
 const sellerBagList = document.getElementById('seller-bag-list');
 const saleProductSelect = document.getElementById('sale-product');
 
-function atualizarVendedor(nomeVendedor) {
+async function atualizarVendedor(nomeVendedor) {
+    await carregarDadosDoBanco();
     sellerBagList.innerHTML = '';
     saleProductSelect.innerHTML = '';
 
@@ -216,7 +271,7 @@ function atualizarVendedor(nomeVendedor) {
     }
 
     itensSacola.forEach(item => {
-        const produto = produtos.find(p => p.id === item.produtoId);
+        const produto = produtos.find(p => p.id === item.produto_id);
         if (produto) {
             sellerBagList.innerHTML += `
                 <div class="bag-item">
@@ -230,33 +285,30 @@ function atualizarVendedor(nomeVendedor) {
 }
 
 // Registrar Venda Rápida
-document.getElementById('quick-sale-form').addEventListener('submit', (e) => {
+document.getElementById('quick-sale-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const produtoId = parseInt(document.getElementById('sale-product').value);
     const qtdVendida = parseInt(document.getElementById('sale-qty').value);
     const vendedorAtual = usuarioLogado.nome;
 
-    const itemSacola = sacolas.filter(s => s.vendedor.toLowerCase() === vendedorAtual.toLowerCase() && s.produtoId === produtoId);
-    const itemEncontrado = itemSacola.find(s => s.produtoId === produtoId);
+    const itemEncontrado = sacolas.find(s => s.vendedor.toLowerCase() === vendedorAtual.toLowerCase() && s.produto_id === produtoId);
 
     if (!itemEncontrado || itemEncontrado.quantidade < qtdVendida) {
         alert('Você não tem essa quantidade na sua sacola!');
         return;
     }
 
-    itemEncontrado.quantidade -= qtdVendida;
+    const novaQtdSacola = itemEncontrado.quantidade - qtdVendida;
 
-    if (itemEncontrado.quantidade === 0) {
-        sacolas = sacolas.filter(s => !(s.vendedor.toLowerCase() === vendedorAtual.toLowerCase() && s.produtoId === produtoId));
+    if (novaQtdSacola === 0) {
+        // Remove o item da sacola se zerar
+        await _supabase.from('sacolas').delete().eq('id', itemEncontrado.id);
+    } else {
+        // Atualiza a quantidade restante na sacola
+        await _supabase.from('sacolas').update({ quantidade: novaQtdSacola }).eq('id', itemEncontrado.id);
     }
 
-    salvarDados();
+    await carregarDadosDoBanco();
     atualizarVendedor(vendedorAtual);
     alert('Venda realizada com sucesso! 🎉');
 });
-
-function salvarDados() {
-    localStorage.setItem('cs_usuarios', JSON.stringify(usuarios));
-    localStorage.setItem('cs_produtos', JSON.stringify(produtos));
-    localStorage.setItem('cs_sacolas', JSON.stringify(sacolas));
-}
