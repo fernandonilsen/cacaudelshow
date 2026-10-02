@@ -94,6 +94,9 @@ function atualizarAdmin() {
     stockTableBody.innerHTML = '';
     bagProductSelect.innerHTML = '';
     bagSellerSelect.innerHTML = '';
+    
+    const userTableBody = document.getElementById('user-table-body');
+    if (userTableBody) userTableBody.innerHTML = '';
 
     // Preencher tabela de estoque e lucro com o botão de excluir
     produtos.forEach(p => {
@@ -121,7 +124,41 @@ function atualizarAdmin() {
     apenasVendedores.forEach(v => {
         bagSellerSelect.innerHTML += `<option value="${v.nome}">${v.nome}</option>`;
     });
+
+    // Preencher tabela de gerenciamento de usuários
+    if (userTableBody) {
+        usuarios.forEach(u => {
+            const botaoAcao = u.nome === 'admin' && u.perfil === 'admin' 
+                ? '<span style="color: #7f8c8d; font-size: 0.85rem;">Fixo</span>' 
+                : `<button onclick="removerUsuario('${u.nome}')" class="btn-danger-small">Excluir</button>`;
+
+            userTableBody.innerHTML += `
+                <tr>
+                    <td>${u.nome}</td>
+                    <td>${u.perfil}</td>
+                    <td>${botaoAcao}</td>
+                </tr>
+            `;
+        });
+    }
 }
+
+// Função para remover usuário (FORA de qualquer outra função)
+window.removerUsuario = function(nomeUsuario) {
+    if (nomeUsuario.toLowerCase() === usuarioLogado.nome.toLowerCase()) {
+        alert('Você não pode excluir a si mesmo enquanto está logado!');
+        return;
+    }
+
+    if (confirm(`Tem certeza que deseja excluir o usuário ${nomeUsuario}?`)) {
+        usuarios = usuarios.filter(u => u.nome.toLowerCase() !== nomeUsuario.toLowerCase());
+        sacolas = sacolas.filter(s => s.vendedor.toLowerCase() !== nomeUsuario.toLowerCase());
+
+        salvarDados();
+        atualizarAdmin();
+        alert('Usuário excluído com sucesso!');
+    }
+};
 
 // Função para remover produto
 window.removerProduto = function(id) {
@@ -200,7 +237,6 @@ document.getElementById('quick-sale-form').addEventListener('submit', (e) => {
     const vendedorAtual = usuarioLogado.nome;
 
     const itemSacola = sacolas.filter(s => s.vendedor.toLowerCase() === vendedorAtual.toLowerCase() && s.produtoId === produtoId);
-
     const itemEncontrado = itemSacola.find(s => s.produtoId === produtoId);
 
     if (!itemEncontrado || itemEncontrado.quantidade < qtdVendida) {
