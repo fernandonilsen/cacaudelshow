@@ -11,19 +11,25 @@
     <!-- TELA DE LOGIN -->
     <section id="login-section" class="auth-container">
         <div class="login-card">
-            <h1>CacauDelShow</h1>
+            <h1>Cacau Show</h1>
             <p>Controle de Estoque e Vendas</p>
             <form id="login-form">
                 <div class="input-group">
-                    <label for="username">Usuário</label>
-                    <input type="text" id="username" placeholder="Digite seu usuário (admin ou vendedor)" required>
+                    <label for="login-type">Tipo de Acesso</label>
+                    <select id="login-type" required>
+                        <option value="admin">Administrador</option>
+                        <option value="vendedor">Vendedor</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="username">Nome de Usuário</label>
+                    <input type="text" id="username" placeholder="Ex: joao ou admin" required>
                 </div>
                 <div class="input-group">
                     <label for="password">Senha</label>
                     <input type="password" id="password" placeholder="Sua senha" required>
                 </div>
                 <button type="submit" class="btn-primary">Entrar</button>
-                <p class="hint">Dica: Use <strong>admin</strong> / 123 ou <strong>vendedor</strong> / 123</p>
             </form>
         </div>
     </section>
@@ -36,6 +42,29 @@
         </header>
 
         <section class="admin-grid">
+            <!-- Cadastro de Usuários (Adm e Vendedores) -->
+            <div class="card">
+                <h3>Cadastrar Novo Usuário</h3>
+                <form id="user-form">
+                    <div class="input-group">
+                        <label>Nome do Usuário</label>
+                        <input type="text" id="new-user-name" required placeholder="Ex: Maria Vendedora">
+                    </div>
+                    <div class="input-group">
+                        <label>Senha</label>
+                        <input type="password" id="new-user-pass" required placeholder="Senha de acesso">
+                    </div>
+                    <div class="input-group">
+                        <label>Tipo de Perfil</label>
+                        <select id="new-user-role" required>
+                            <option value="vendedor">Vendedor</option>
+                            <option value="admin">Administrador</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn-primary">Salvar Usuário</button>
+                </form>
+            </div>
+
             <!-- Cadastro de Produtos -->
             <div class="card">
                 <h3>Cadastrar Produto no Estoque</h3>
@@ -65,8 +94,8 @@
                 <h3>Montar Sacola para Vendedor</h3>
                 <form id="bag-form">
                     <div class="input-group">
-                        <label>Nome do Vendedor</label>
-                        <input type="text" id="bag-seller" required placeholder="Nome do vendedor">
+                        <label>Selecionar Vendedor</label>
+                        <select id="bag-seller" required></select>
                     </div>
                     <div class="input-group">
                         <label>Selecionar Produto</label>
@@ -94,11 +123,10 @@
                             <th>Preço Venda</th>
                             <th>Lucro Unitário</th>
                             <th>Lucro Potencial Total</th>
+                            <th>Ações</th> <!-- Nova coluna -->
                         </tr>
                     </thead>
-                    <tbody id="stock-table-body">
-                        <!-- Preenchido via JS -->
-                    </tbody>
+                    <tbody id="stock-table-body"></tbody>
                 </table>
             </div>
         </section>
@@ -107,16 +135,14 @@
     <!-- PAINEL DO VENDEDOR -->
     <main id="seller-dashboard" class="dashboard hidden">
         <header>
-            <h2>Painel do Vendedor - Minha Sacola</h2>
+            <h2 id="seller-welcome-title">Painel do Vendedor - Minha Sacola</h2>
             <button id="logout-seller" class="btn-secondary">Sair</button>
         </header>
 
         <section class="seller-grid">
             <div class="card">
                 <h3>Itens na Minha Sacola</h3>
-                <div id="seller-bag-list" class="bag-list">
-                    <!-- Preenchido via JS -->
-                </div>
+                <div id="seller-bag-list" class="bag-list"></div>
             </div>
 
             <div class="card">
