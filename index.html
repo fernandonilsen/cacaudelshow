@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cacau Show - Sistema de Vendas e Estoque</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- TELA DE LOGIN -->
+    <section id="login-section" class="auth-container">
+        <div class="login-card">
+            <h1>CacauDelShow</h1>
+            <p>Controle de Estoque e Vendas</p>
+            <form id="login-form">
+                <div class="input-group">
+                    <label for="username">Usuário</label>
+                    <input type="text" id="username" placeholder="Digite seu usuário (admin ou vendedor)" required>
+                </div>
+                <div class="input-group">
+                    <label for="password">Senha</label>
+                    <input type="password" id="password" placeholder="Sua senha" required>
+                </div>
+                <button type="submit" class="btn-primary">Entrar</button>
+                <p class="hint">Dica: Use <strong>admin</strong> / 123 ou <strong>vendedor</strong> / 123</p>
+            </form>
+        </div>
+    </section>
+
+    <!-- PAINEL ADMINISTRADOR -->
+    <main id="admin-dashboard" class="dashboard hidden">
+        <header>
+            <h2>Painel do Administrador - Cacau Show</h2>
+            <button id="logout-admin" class="btn-secondary">Sair</button>
+        </header>
+
+        <section class="admin-grid">
+            <!-- Cadastro de Produtos -->
+            <div class="card">
+                <h3>Cadastrar Produto no Estoque</h3>
+                <form id="product-form">
+                    <div class="input-group">
+                        <label>Nome do Doce / Trufa</label>
+                        <input type="text" id="prod-name" required placeholder="Ex: Trufa 30g">
+                    </div>
+                    <div class="input-group">
+                        <label>Preço de Fábrica (Custo R$)</label>
+                        <input type="number" step="0.01" id="prod-cost" required placeholder="0.00">
+                    </div>
+                    <div class="input-group">
+                        <label>Preço de Venda (Cliente R$)</label>
+                        <input type="number" step="0.01" id="prod-price" required placeholder="0.00">
+                    </div>
+                    <div class="input-group">
+                        <label>Quantidade em Estoque</label>
+                        <input type="number" id="prod-stock" required placeholder="0">
+                    </div>
+                    <button type="submit" class="btn-primary">Adicionar ao Estoque</button>
+                </form>
+            </div>
+
+            <!-- Montagem de Sacolas -->
+            <div class="card">
+                <h3>Montar Sacola para Vendedor</h3>
+                <form id="bag-form">
+                    <div class="input-group">
+                        <label>Nome do Vendedor</label>
+                        <input type="text" id="bag-seller" required placeholder="Nome do vendedor">
+                    </div>
+                    <div class="input-group">
+                        <label>Selecionar Produto</label>
+                        <select id="bag-product" required></select>
+                    </div>
+                    <div class="input-group">
+                        <label>Quantidade para a Sacola</label>
+                        <input type="number" id="bag-qty" required placeholder="Qtd">
+                    </div>
+                    <button type="submit" class="btn-primary">Enviar para Sacola</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Controle de Estoque e Lucro -->
+        <section class="card full-width">
+            <h3>Controle de Estoque & Lucro Estimado</h3>
+            <div class="table-responsive">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Produto</th>
+                            <th>Estoque Atual</th>
+                            <th>Custo Fábrica</th>
+                            <th>Preço Venda</th>
+                            <th>Lucro Unitário</th>
+                            <th>Lucro Potencial Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stock-table-body">
+                        <!-- Preenchido via JS -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <!-- PAINEL DO VENDEDOR -->
+    <main id="seller-dashboard" class="dashboard hidden">
+        <header>
+            <h2>Painel do Vendedor - Minha Sacola</h2>
+            <button id="logout-seller" class="btn-secondary">Sair</button>
+        </header>
+
+        <section class="seller-grid">
+            <div class="card">
+                <h3>Itens na Minha Sacola</h3>
+                <div id="seller-bag-list" class="bag-list">
+                    <!-- Preenchido via JS -->
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Registrar Venda Rápida</h3>
+                <form id="quick-sale-form">
+                    <div class="input-group">
+                        <label>Selecione o Item da sua Sacola</label>
+                        <select id="sale-product" required></select>
+                    </div>
+                    <div class="input-group">
+                        <label>Quantidade Vendida</label>
+                        <input type="number" id="sale-qty" required placeholder="1">
+                    </div>
+                    <button type="submit" class="btn-success">Concluir Venda</button>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <script src="script.js"></script>
+</body>
+</html>
